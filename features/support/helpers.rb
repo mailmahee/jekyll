@@ -1,6 +1,5 @@
 require "fileutils"
 require "jekyll"
-require "open3"
 require "time"
 require "safe_yaml/load"
 
@@ -106,17 +105,12 @@ end
 
 # rubocop:disable Metrics/AbcSize
 def run_in_shell(*args)
-  i, o, e, p = Open3.popen3(*args)
-  out = o.read.strip
-  err = e.read.strip
-
-  [i, o, e].each(&:close)
+  p, output = Jekyll::Utils::Exec.run(*args)
 
   File.write(Paths.status_file, p.value.exitstatus)
   File.open(Paths.output_file, "wb") do |f|
     f.puts "$ " << args.join(" ")
-    f.puts out
-    f.puts err
+    f.puts output
     f.puts "EXIT STATUS: #{p.value.exitstatus}"
   end
 
